@@ -1,5 +1,5 @@
 /*
-    serializer.cpp: Helper class to serialize the application state to a .PLY file
+    ply_serializer.cpp: Helper class to serialize the application state to a .PLY file
 
     This file is part of the implementation of
 
@@ -11,16 +11,16 @@
     BSD-style license that can be found in the LICENSE.txt file.
 */
 
-#include "serializer.h"
+#include "ply_serializer.h"
 #include <set>
 
 extern "C" {
     #include "rply.h"
 }
 
-Serializer::Serializer() : mCompatibilityMode(false) { mPrefixStack.push(""); }
+PlySerializer::PlySerializer() : Serializer(false) { mPrefixStack.push(""); }
 
-bool Serializer::isSerializedFile(const std::string &filename) {
+bool PlySerializer::isSerializedFile(const std::string &filename) {
     auto message_cb = [](p_ply ply, const char *msg) { /* ignore */};
     p_ply ply = ply_open(filename.c_str(), message_cb, 0, nullptr);
     if (!ply)
@@ -39,16 +39,6 @@ bool Serializer::isSerializedFile(const std::string &filename) {
     return is_serialized;
 }
 
-std::vector<std::string> Serializer::getKeys() const {
-    const std::string &prefix = mPrefixStack.top();
-    std::vector<std::string> result;
-    for (auto const &kv : mData) {
-        if (kv.first.substr(0, prefix.length()) == prefix)
-            result.push_back(kv.first.substr(prefix.length()));
-    }
-    return result;
-}
-
 struct CallbackState {
     const ProgressCallback &progress;
     void *data;
@@ -62,8 +52,8 @@ struct CallbackState {
 };
 
 
-Serializer::Serializer(const std::string &filename, bool compatibilityMode, const ProgressCallback &progress)
-    : mCompatibilityMode(compatibilityMode) {
+PlySerializer::PlySerializer(const std::string &filename, bool compatibilityMode, const ProgressCallback &progress)
+    : Serializer(compatibilityMode) {
     auto message_cb = [](p_ply ply, const char *msg) { cerr << "rply: " << msg << endl; };
 
     mPrefixStack.push("");
@@ -73,11 +63,11 @@ Serializer::Serializer(const std::string &filename, bool compatibilityMode, cons
 
     p_ply ply = ply_open(filename.c_str(), message_cb, 0, nullptr);
     if (!ply)
-        throw std::runtime_error("Serializer: unable to open PLY file \"" + filename + "\"!");
+        throw std::runtime_error("PlySerializer: unable to open PLY file \"" + filename + "\"!");
 
     if (!ply_read_header(ply)) {
         ply_close(ply);
-        throw std::runtime_error("Serializer: unable to open PLY header of \"" + filename + "\"!");
+        throw std::runtime_error("PlySerializer: unable to open PLY header of \"" + filename + "\"!");
     }
 
     p_ply_element element = nullptr;
@@ -155,7 +145,7 @@ Serializer::Serializer(const std::string &filename, bool compatibilityMode, cons
                 if (!ply_set_read_cb(ply, element_name, property_name, rply_element_cb, state, rows++)) {
                     ply_close(ply);
                     throw std::runtime_error(
-                        "Serializer: could not register read callback for " + std::string(element_name) +
+                        "PlySerializer: could not register read callback for " + std::string(element_name) +
                         "." + std::string(property_name) + " in PLY file \"" + filename + "\"!");
                 }
             }
@@ -163,7 +153,7 @@ Serializer::Serializer(const std::string &filename, bool compatibilityMode, cons
                 rows = 1;
 
             if (fail)
-                throw std::runtime_error("Serializer: unsupported data format in \"" + filename + "\"!");
+                throw std::runtime_error("PlySerializer: unsupported data format in \"" + filename + "\"!");
 
             Variant &variant = mData[std::string(element_name)];
             totalSize += cols;
@@ -212,26 +202,7 @@ Serializer::Serializer(const std::string &filename, bool compatibilityMode, cons
     cout << "done. (took " << timeString(timer.value()) << ")" << endl;
 }
 
-Serializer::~Serializer() {
-    #define IMPLEMENT(type) \
-        case Variant::Type::List_##type: delete kv.second.list_##type; break; \
-        case Variant::Type::Matrix_##type: delete kv.second.matrix_##type; break;
-
-    for (auto const &kv : mData) {
-        switch (kv.second.type_id) {
-            IMPLEMENT(uint8_t);
-            IMPLEMENT(uint16_t);
-            IMPLEMENT(uint32_t);
-            IMPLEMENT(float);
-            IMPLEMENT(double);
-            default: break;
-        }
-    }
-
-    #undef IMPLEMENT
-}
-
-void Serializer::write(const std::string &filename, const ProgressCallback &progress) {
+void PlySerializer::write(const std::string &filename, const ProgressCallback &progress) {
     auto message_cb = [](p_ply ply, const char *msg) { cerr << "rply: " << msg << endl; };
 
     Timer<> timer;
@@ -316,151 +287,4 @@ void Serializer::write(const std::string &filename, const ProgressCallback &prog
 
     ply_close(ply);
     cout << "done. (took " << timeString(timer.value()) << ")" << endl;
-}
-
-size_t Serializer::totalSize() const {
-    size_t result = 0;
-
-    #define IMPLEMENT(type) \
-        case Variant::Type::Matrix_##type: \
-            result += kv.second.matrix_##type->size() * sizeof(type); \
-            break; \
-        case Variant::Type::List_##type: {\
-                const std::vector<std::vector<type>> &list = *kv.second.list_##type; \
-                for (uint32_t i=0; i<list.size(); ++i) \
-                    result += list[i].size() * sizeof(type) + sizeof(uint32_t); \
-            } \
-            break;
-
-    for (auto const &kv : mData) {
-        switch (kv.second.type_id) {
-            IMPLEMENT(uint8_t);
-            IMPLEMENT(uint16_t);
-            IMPLEMENT(uint32_t);
-            IMPLEMENT(float);
-            IMPLEMENT(double);
-        }
-    }
-
-    #undef IMPLEMENT
-    return result;
-}
-
-
-bool Serializer::diff(const Serializer &other) const {
-    std::set<std::string> keys;
-    for (auto const &kv : mData)
-        keys.insert(kv.first);
-    for (auto const &kv : other.mData)
-        keys.insert(kv.first);
-
-    bool diff = false;
-
-    for (const std::string &key : keys) {
-        auto it1 = mData.find(key);
-        if (it1 == mData.end()) {
-            cout << "Element " << key << " does not exist in serializer 1." << endl;
-            diff = true;
-            continue;
-        }
-        auto it2 = other.mData.find(key);
-        if (it2 == other.mData.end()) {
-            cout << "Element " << key << " does not exist in serializer 2." << endl;
-            diff = true;
-            continue;
-        }
-        const Variant &v1 = it1->second;
-        const Variant &v2 = it2->second;
-        if (v1.type_id != v2.type_id) {
-            cout << "Element " << key << " have different types." << endl;
-            diff = true;
-            continue;
-        }
-
-        #define IMPLEMENT(type) \
-            case Variant::Type::Matrix_##type: \
-                if (v1.matrix_##type->cols() != v2.matrix_##type->cols() || \
-                    v1.matrix_##type->rows() != v2.matrix_##type->rows()) \
-                    result = true; \
-                else \
-                    result = *(v1.matrix_##type) != *(v2.matrix_##type); \
-                break; \
-            case Variant::Type::List_##type: \
-                result = *(v1.list_##type) != *(v2.list_##type); \
-                break;
-
-        bool result = false;
-        switch (v1.type_id) {
-            IMPLEMENT(uint8_t);
-            IMPLEMENT(uint16_t);
-            IMPLEMENT(uint32_t);
-            IMPLEMENT(float);
-            IMPLEMENT(double);
-            default:
-                throw std::runtime_error("Unexpected data type while diffing!");
-                break;
-        }
-
-        #undef IMPLEMENT
-
-        if (result) {
-            cout << "Element " << key << " differs." << endl;
-            diff = true;
-        }
-    }
-
-    return diff;
-}
-
-std::ostream &operator<<(std::ostream &os, const Serializer &state) {
-    os << "Serializer[";
-    bool first = true;
-    for (auto const &kv : state.mData) {
-        const Serializer::Variant &v = kv.second;
-        if (!first)
-            cout << ",";
-        first = false;
-        cout << endl;
-        std::string tname, value;
-
-        #define IMPLEMENT(type) \
-            case Serializer::Variant::Type::Matrix_##type: { \
-                    const Eigen::Matrix<type, Eigen::Dynamic, Eigen::Dynamic> &mat = *(v.matrix_##type); \
-                    if (mat.size() == 1) { \
-                        tname = #type; \
-                        value = std::to_string(mat(0, 0)); \
-                    } else if (mat.cols() == 1 && mat.rows() <= 4) { \
-                        tname = "vec<" #type ">"; \
-                        value = "["; \
-                        for (int i=0; i<mat.rows(); ++i) { \
-                            value += std::to_string(mat(i, 0)); \
-                            if (i+1<mat.rows()) \
-                                value += ", "; \
-                        } \
-                        value += "]"; \
-                    } else { \
-                        tname = std::string(mat.cols() == 1 ? "vec<" : "mat<") + #type + std::string(">"); \
-                        value = "data[" + std::to_string(mat.rows()) + "x" + \
-                                          std::to_string(mat.cols()) + "]"; \
-                    } \
-                } \
-                break; \
-            case Serializer::Variant::Type::List_##type: \
-                tname = #type "**"; \
-                value = "data[" + std::to_string(v.list_##type->size()) + "][]"; \
-                break; \
-
-        switch (v.type_id) {
-            IMPLEMENT(uint8_t);
-            IMPLEMENT(uint16_t);
-            IMPLEMENT(uint32_t);
-            IMPLEMENT(float);
-            IMPLEMENT(double);
-            default:
-                throw std::runtime_error("Unexpected type in stream operator");
-        }
-        os << "\t" << tname << " " << kv.first << " = " << value;
-    }
-    os << endl << "]";
-    return os;
 }

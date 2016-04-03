@@ -22,14 +22,8 @@
 class Serializer {
 public:
     Serializer();
-    Serializer(const std::string &filename, bool compatibilityMode = false,
-               const ProgressCallback &progress = ProgressCallback());
+    Serializer(bool compatibilityMode = false);
     ~Serializer();
-
-    void write(const std::string &filename,
-               const ProgressCallback &progress = ProgressCallback());
-
-    static bool isSerializedFile(const std::string &filename);
 
     void pushPrefix(const std::string &prefix) const { mPrefixStack.push(mPrefixStack.top() + prefix + "."); }
     void popPrefix() const { mPrefixStack.pop(); }

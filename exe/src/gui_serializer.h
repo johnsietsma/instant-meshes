@@ -16,14 +16,14 @@
 #pragma once
 
 #include "widgets.h"
-#include "serializer.h"
+#include "ply_serializer.h"
 
-class GUISerializer : public Serializer {
+class GUISerializer : public PlySerializer {
 public:
-    GUISerializer() : Serializer() { }
-    GUISerializer(const std::string &filename, bool compat) : Serializer(filename, compat) { }
+    GUISerializer() : PlySerializer() { }
+    GUISerializer(const std::string &filename, bool compat) : PlySerializer(filename, compat) { }
     GUISerializer(const std::string &filename, bool compatibilityMode = false,
-               const ProgressCallback &progress = ProgressCallback()) : Serializer(filename, compatibilityMode, progress) { }
+               const ProgressCallback &progress = ProgressCallback()) : PlySerializer(filename, compatibilityMode, progress) { }
     using Serializer::get;
     using Serializer::set;
 

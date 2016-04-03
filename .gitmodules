@@ -1,15 +1,24 @@
 [submodule "ext/nanogui"]
-	path = ext/nanogui
+	path = exe/ext/nanogui
 	url = https://github.com/wjakob/nanogui
 [submodule "ext/pcg32"]
-	path = ext/pcg32
+	path = exe/ext/pcg32
 	url = https://github.com/wjakob/pcg32
 [submodule "ext/dset"]
-	path = ext/dset
+	path = lib/ext/dset
 	url = https://github.com/wjakob/dset
 [submodule "ext/tbb"]
-	path = ext/tbb
+	path = lib/ext/tbb
 	url = https://github.com/wjakob/tbb
 [submodule "ext/pss"]
-	path = ext/pss
+	path = lib/ext/pss
 	url = https://github.com/wjakob/pss
+[submodule "lib/ext/eigen"]
+	path = lib/ext/eigen
+	url = https://github.com/libigl/eigen.git
+[submodule "lib/ext/pcg32"]
+	path = lib/ext/pcg32
+	url = https://github.com/wjakob/pcg32
+[submodule "exe/ext/tbb"]
+	path = exe/ext/tbb
+	url = https://github.com/wjakob/tbb

@@ -14,6 +14,7 @@
 #include "normal.h"
 #include "dedge.h"
 
+
 extern void
 generate_smooth_normals(const MatrixXu &F, const MatrixXf &V, MatrixXf &N,
                         bool deterministic,

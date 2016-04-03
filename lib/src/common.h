@@ -20,27 +20,22 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <tbb/tbb.h>
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 #include <vector>
 #include <atomic>
-#include <tbb/tbb.h>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
 #include <algorithm>
 
-#define PARALLELIZE
 #define SINGLE_PRECISION
-#define GRAIN_SIZE 1024
+#include "types.h"
 
-/* Application precision -- can be set to single or double precision */
-#if defined(SINGLE_PRECISION)
-typedef float Float;
-#else
-typedef double Float;
-#endif
+#define PARALLELIZE
+#define GRAIN_SIZE 1024
 
 /* Useful Eigen typedefs based on the current precision */
 typedef Eigen::Matrix<int32_t, 2, 1>                            Vector2i;

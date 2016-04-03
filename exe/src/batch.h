@@ -13,7 +13,9 @@
 
 #pragma once
 
-#include "common.h"
+#include "types.h"
+
+#include <string>
 
 extern void batch_process(const std::string &input, const std::string &output,
                           int rosy, int posy, Float scale, int face_count,

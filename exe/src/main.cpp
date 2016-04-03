@@ -13,7 +13,7 @@
 
 #include "batch.h"
 #include "viewer.h"
-#include "serializer.h"
+#include "ply_serializer.h"
 #include <thread>
 #include <cstdlib>
 
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     if (args.size() == 0)
         cout << "Running in GUI mode, start with -h for instructions on batch mode." << endl;
 
-    tbb::task_scheduler_init init(nprocs == -1 ? tbb::task_scheduler_init::automatic : nprocs);
+    //tbb::task_scheduler_init init(nprocs == -1 ? tbb::task_scheduler_init::automatic : nprocs);
 
     if (!batchOutput.empty() && args.size() == 1) {
         try {
@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
             viewer->setVisible(true);
 
             if (args.size() == 1) {
-                if (Serializer::isSerializedFile(args[0])) {
+                if (PlySerializer::isSerializedFile(args[0])) {
                     viewer->loadState(args[0], compat);
                 } else {
                     viewer->loadInput(args[0], crease_angle,

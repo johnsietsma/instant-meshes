@@ -25,7 +25,7 @@ public:
     PlySerializer();
     PlySerializer(const std::string &filename, bool compatibilityMode = false,
                const ProgressCallback &progress = ProgressCallback());
-    ~PlySerializer();
+    virtual ~PlySerializer() = default;
 
     void write(const std::string &filename,
                const ProgressCallback &progress = ProgressCallback());

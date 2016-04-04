@@ -31,7 +31,6 @@
 #include <thread>
 #include <algorithm>
 
-#define SINGLE_PRECISION
 #include "types.h"
 
 #define PARALLELIZE

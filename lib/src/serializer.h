@@ -21,16 +21,15 @@
 
 class Serializer {
 public:
-    Serializer();
     Serializer(bool compatibilityMode = false);
-    ~Serializer();
+    virtual ~Serializer();
 
     void pushPrefix(const std::string &prefix) const { mPrefixStack.push(mPrefixStack.top() + prefix + "."); }
     void popPrefix() const { mPrefixStack.pop(); }
 
     bool diff(const Serializer &serializer) const;
 
-    inline size_t totalSize() const;
+    size_t totalSize() const;
 
     std::vector<std::string> getKeys() const;
 

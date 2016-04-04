@@ -14,7 +14,7 @@
 #include "serializer.h"
 #include <set>
 
-Serializer::Serializer() : mCompatibilityMode(false) { mPrefixStack.push(""); }
+Serializer::Serializer(bool compatibilityMode) : mCompatibilityMode(compatibilityMode) { mPrefixStack.push(""); }
 
 std::vector<std::string> Serializer::getKeys() const {
     const std::string &prefix = mPrefixStack.top();

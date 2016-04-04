@@ -116,6 +116,9 @@ int main(int argc, char **argv) {
             } else if (strncmp("-psn", argv[i], 4) == 0) {
                 launched_from_finder = true;
 #endif
+            }
+            else if (strcmp("-NSDocumentRevisionsDebugMode", argv[i]) == 0 ) {
+                // Added automatically by xcode, just ignore it.
             } else {
                 if (strncmp(argv[i], "-", 1) == 0) {
                     cerr << "Invalid argument: \"" << argv[i] << "\"!" << endl;

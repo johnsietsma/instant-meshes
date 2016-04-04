@@ -60,14 +60,14 @@ public:
     virtual ~Viewer();
 
     bool mouseMotionEvent(const Vector2i &p, const Vector2i &rel,
-                                  int button, int modifiers);
+                                  int button, int modifiers) override;
 
     bool mouseButtonEvent(const Vector2i &p, int button, bool down,
-                                  int modifiers);
+                                  int modifiers) override;
 
-    bool keyboardEvent(int key, int scancode, int action, int modifiers);
+    bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
 
-    bool scrollEvent(const Vector2i &p, const Vector2f &rel);
+    bool scrollEvent(const Vector2i &p, const Vector2f &rel) override;
 
     void loadInput(std::string filename,
                    Float creaseAngle = std::numeric_limits<Float>::infinity(),
@@ -82,16 +82,16 @@ public:
     void saveState(std::string filename);
     void renderMitsuba();
     void setFloorPosition();
-    void draw(NVGcontext *ctx);
+    void draw(NVGcontext *ctx) override;
 
 protected:
     void extractMesh();
     void extractConsensusGraph();
 
-    void drawContents();
+    void drawContents() override;
     void drawOverlay();
 
-    bool resizeEvent(const Vector2i &size);
+    bool resizeEvent(const Vector2i &size) override;
 
     void refreshColors();
 
